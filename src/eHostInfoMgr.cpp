@@ -18,8 +18,6 @@
 #include "eHostInfoMgr.h"
 #include "ePreDefine.h"
 
-#define KILLPROC(PID) { kill(PID, SIGINT); }
-
 using namespace std;
 //-------------------------------------------------------------------------------
 
@@ -27,6 +25,18 @@ using namespace std;
 //#undef LOG
 //#define LOG(X,...) { do{}while(0); }
 #endif
+//-------------------------------------------------------------------------------
+
+void KILLPROC(int pid)
+{
+	int result = kill(pid, SIGINT);
+	if (result) {
+#ifdef DEBUG_LOG
+		LOG("SEND SIGINT to %d, result : %d", pid, result);
+#endif
+	}
+	sleep(1);
+}
 //-------------------------------------------------------------------------------
 
 eHostInfoMgr::eHostInfoMgr(std::string aName, int aInfoCount)

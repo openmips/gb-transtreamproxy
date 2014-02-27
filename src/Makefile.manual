@@ -6,7 +6,7 @@
 # Description :
 #============================================================================
 
-include .config
+include config.manual.mk
 
 VER = v2.1
 REV = $(shell cat .revision)
@@ -40,8 +40,8 @@ REV = 0
 endif
 
 ifeq ($(ARCH),mipsel)
-BUILD_TOP = $(OE_TOP)/staging/$(FLATFORM)
-CROSS = $(OE_TOP)/cross/mipsel/bin/$(FLATFORM)-
+BUILD_TOP=$(OE_TOP)/build/$(IMAGE)/tmp/sysroots/$(IMAGE)/$(FLATFORM)
+CROSS=$(OE_TOP)/build/$(IMAGE)/tmp/sysroots/i686-linux/usr/bin/mips32el-oe-linux/$(FLATFORM)-
 endif
 
 ifeq ($(BUILD_MODE),debug)

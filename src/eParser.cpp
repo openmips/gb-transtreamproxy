@@ -65,7 +65,7 @@ void eParser::FileName(char* aRequest, char* aHttp, std::string& aOutData)
 		return;
 	}
 	strncpy(tmp, file+10, aHttp-file-10);
-	aOutData = eURIDecoder().Decode(tmp);
+	aOutData = URIDecoder().Decode(tmp);
 }
 //-------------------------------------------------------------------------------
 

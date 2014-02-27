@@ -39,6 +39,10 @@ FILE* fpLog = 0;
 //#define LOG(X,...) { do{}while(0); }
 #endif
 
+#ifndef PV
+#define PV "v2.2"
+#endif /*PV*/
+
 using namespace std;
 //-------------------------------------------------------------------------------
 
@@ -59,9 +63,43 @@ Connection: close
 Icy-MetaData: 1
 
 GET /file?file=/hdd/movie/20131023%201005%20-%20DW%20-%20Germany%20Today.ts HTTP/1.1
+Host: 192.168.102.177:8002
+User-Agent: VLC/2.0.8 LibVLC/2.0.8
+Range: bytes=0-
+Connection: close
+Icy-MetaData: 1
 */
+
+char gFileType = 'c';
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <errno.h>
+
 int main(int argc, char** argv)
 {
+	signal(SIGINT, SigHandler);
+
+	char saveFileName[256] = {0};
+	if (argc > 1) {
+		if (strcmp(argv[1], "-v") == 0) {
+			printf("%s %s\n", argv[0], PV);
+			return 0;
+		}
+		else if (strcmp(argv[1], "-f") == 0) {
+			strcpy(saveFileName, argv[2]);
+			gFileType = 'f';
+		}
+		else {
+			printf("%s [-v | -f [FILENAME]]\n", argv[0]);
+			return 0;
+		}
+	}
+
 	char request[MAX_LINE_LENGTH] = {0};
 	int videopid = 0, audiopid = 0, pmtid = 0;
 
@@ -83,8 +121,6 @@ int main(int argc, char** argv)
 	} else {
 		hostmgr.Register(ipaddr, getpid());
 	}
-
-	signal(SIGINT, SigHandler);
 
 	if (!ReadRequest(request)) {
 		RETURN_ERR_400();
@@ -143,8 +179,18 @@ int main(int argc, char** argv)
 	}
 	hTranscodingDevice = &transcoding;
 
+	int outputFileFd = 0;
+	if (gFileType == 'f') {
+		outputFileFd = open(saveFileName, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (outputFileFd <= 0) {
+			outputFileFd = 0;
+		}
+#ifdef DEBUG_LOG
+		LOG("Save File Name detected!! [%s][%d]", saveFileName, outputFileFd);
+#endif
+	}
 	bool ispidseted = false;
-	eNetworkPumpThread networkpump(transcoding.GetDeviceFd());
+	eNetworkPumpThread networkpump(transcoding.GetDeviceFd(), outputFileFd);
 	hNetworkPumpThread = &networkpump;
 
 	if(!isfilestream) {
@@ -265,9 +311,13 @@ int main(int argc, char** argv)
 }
 //-------------------------------------------------------------------------------
 
+FILE* fp = fopen("/home/root/input.txt", "r");
 char* ReadRequest(char* aRequest)
 {
-	return fgets(aRequest, MAX_LINE_LENGTH-1, stdin);
+	if (fp <= 0) {
+		fp = stdin;
+	}
+	return fgets(aRequest, MAX_LINE_LENGTH-1, fp);
 }
 //-------------------------------------------------------------------------------
 
@@ -281,12 +331,6 @@ void SigHandler(int aSigNo)
 #ifdef DEBUG_LOG
 		LOG("SIGINT detected.");
 #endif
-//		if(hDemuxPumpThread) {
-//			hDemuxPumpThread->Close();
-//		}
-//		if(hTranscodingDevice) {
-//			hTranscodingDevice->close();
-//		}
 		exit(0);
 	}
 }
