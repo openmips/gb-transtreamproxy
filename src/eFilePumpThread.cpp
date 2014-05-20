@@ -36,8 +36,15 @@ bool eFilePumpThread::Open(std::string aFileName)
 {
 	mFileFd = open(aFileName.c_str(), O_RDONLY | O_LARGEFILE);
 	if(mFileFd <= 0) {
+#ifdef DEBUG_LOG
+		LOG("media file open fail. [%s]", aFileName.c_str());
+#endif
+		mFileFd = 0;
 		return false;
 	}
+#ifdef DEBUG_LOG
+	LOG("media file open success. [%d] [%s]", mFileFd, aFileName.c_str());
+#endif
 	return true;
 }
 //-------------------------------------------------------------------------------
@@ -46,6 +53,9 @@ void eFilePumpThread::Close()
 {
 	if(mFileFd > 0) {
 		close(mFileFd);
+#ifdef DEBUG_LOG
+		LOG("media file closed. [%d]", mFileFd);
+#endif
 	}
 	mFileFd = 0;
 }

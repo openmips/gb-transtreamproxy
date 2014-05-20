@@ -11,6 +11,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 
 #include "ePreDefine.h"
 #include "eTransCodingDevice.h"
@@ -72,10 +73,10 @@ bool eTransCodingDevice::Open()
 	}
 	//mDeviceFd = open("/dev/bcm_enc0", O_RDWR);
 	if(mDeviceFd <= 0) {
-		mDeviceFd = 0;
 #ifdef DEBUG_LOG
-		LOG("transcoding device open failed.");
+		LOG("transcoding device open failed (%s)(%s : %d).", path, strerror(errno), errno);
 #endif
+		mDeviceFd = 0;
 		return false;
 	}
 #ifdef DEBUG_LOG
@@ -88,8 +89,11 @@ bool eTransCodingDevice::Open()
 void eTransCodingDevice::Close()
 {
 	StopTranscoding();
-	if(mDeviceFd == 0) {
+	if(mDeviceFd > 0) {
 		close(mDeviceFd);
+#ifdef DEBUG_LOG
+		LOG("transcoding device closed. [%d]", mDeviceFd);
+#endif
 	}
 	mDeviceFd = 0;
 }

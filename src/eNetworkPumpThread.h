@@ -14,13 +14,14 @@
 class eNetworkPumpThread : public uThread
 {
 private:
-	int mDeviceFd;
-	bool mTermFlag;
+	bool mTermFlag, mHeaderEnable;
+	int mDeviceFd, mOutputFileFd;
+
 protected:
 	void Run();
 	void Terminate();
 public:
-	eNetworkPumpThread(int aDeviceFd);
+	eNetworkPumpThread(int aDeviceFd, int aOutputFileFd = 0, bool aHeaderEnable=true);
 	virtual ~eNetworkPumpThread();
 };
 //-------------------------------------------------------------------------------
