@@ -6,24 +6,30 @@
 # Description :
 #============================================================================
 
-include .config
+include config.manual.mk
 
-VER = v1.0
+VER = v2.1
 REV = $(shell cat .revision)
 BIN = transtreamproxy
 
 SRC = \
 	main.cpp \
 	uThread.cpp \
+	eParser.cpp \
 	eURIDecoder.cpp \
+	eUpstreamSocket.cpp \
+	eTransCodingDevice.cpp \
 	eFilePumpThread.cpp \
 	eNetworkPumpThread.cpp \
+	eDemuxPumpThread.cpp \
+	eHostInfoMgr.cpp \
 
 
 CFLAGS ?=
 LDFLAGS ?=
 
-CFLAGS += -DDEBUG_LOG
+#CFLAGS += -DNORMAL_STREAMPROXY
+CFLAGS += -Wno-unused-result
 
 ifeq ($(SILENT_BUILD_MODE),y)
 Q=@
@@ -34,12 +40,13 @@ REV = 0
 endif
 
 ifeq ($(ARCH),mipsel)
-BUILD_TOP = $(OE_TOP)/staging/$(FLATFORM)
-CROSS = $(OE_TOP)/cross/mipsel/bin/$(FLATFORM)-
+BUILD_TOP=$(OE_TOP)/build/$(IMAGE)/tmp/sysroots/$(IMAGE)/$(FLATFORM)
+CROSS=$(OE_TOP)/build/$(IMAGE)/tmp/sysroots/i686-linux/usr/bin/mips32el-oe-linux/$(FLATFORM)-
 endif
 
 ifeq ($(BUILD_MODE),debug)
 CFLAGS += -g
+CFLAGS += -DDEBUG_LOG
 else ifeq ($(BUILD_MODE),release)
 CFLAGS += -O2
 endif
@@ -50,7 +57,7 @@ STRIP= $(CROSS)strip
 RM= rm -f
 
 CFLAGS += -I$(BUILD_TOP)/usr/include
-LDFLAGS += -L$(BUILD_TOP)/usr/lib -lpthread
+LDFLAGS += -L$(BUILD_TOP)/usr/lib -lpthread -lrt
 
 OBJ=$(SRC:.cpp=.o)
 
@@ -81,6 +88,9 @@ install:
 erase:clean
 	$(Q)$(RM) .revision
 
+autotools:
+	@cd ../ && aclocal && autoreconf && automake && ./configure && make clean all && make clean
+
 .showinfo:
 	@echo "-----------------------------------------------------"
 	@echo "                [ BUILD ENVIRONMENT ]                "
@@ -99,7 +109,7 @@ erase:clean
 
 .version:
 	@echo "/*"								>  version.h 
-	@echo " * uVersion.h"				>> version.h
+	@echo " * version.h"				>> version.h
 	@echo " * Auto generated code."		>> version.h
 	@echo " */"							>> version.h
 	@echo "#ifndef UVERSION_H_"			>> version.h

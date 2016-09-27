@@ -14,16 +14,21 @@
 class eFilePumpThread : public uThread
 {
 private:
-	bool mTermFlag;
+	int mFileFd;
 	int mDeviceFd;
-	std::string mFileName;
+	bool mTermFlag;
+
 protected:
 	void Run();
 	void Terminate();
 
 public:
-	eFilePumpThread(int aDeviceFd, std::string aFileName);
+	eFilePumpThread(int aDeviceFd);
 	~eFilePumpThread();
+
+	bool Open(std::string aFileName);
+	void Close();
+	void SeekOffset(int aOffset);
 };
 //-------------------------------------------------------------------------------
 

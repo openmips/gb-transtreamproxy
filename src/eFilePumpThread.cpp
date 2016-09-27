@@ -5,12 +5,9 @@
  *      Author: kos
  */
 
-//#include "uLogger.h"
-
-//#include "uDemux.h"
-
 #include <poll.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <fcntl.h>
 
 #include "ePreDefine.h"
@@ -22,45 +19,103 @@
 //#define LOG(X,...) { do{}while(0); }
 #endif
 
-eFilePumpThread::eFilePumpThread(int aDeviceFd, std::string aFileName)
-	: mDeviceFd(aDeviceFd), mFileName(aFileName), mTermFlag(false), uThread("FilePumpThread", TYPE_DETACHABLE)
+eFilePumpThread::eFilePumpThread(int aDeviceFd)
+	: mDeviceFd(aDeviceFd), mFileFd(0), mTermFlag(false),
+	  uThread("FilePumpThread", TYPE_DETACHABLE)
 {
 }
 //-------------------------------------------------------------------------------
 
 eFilePumpThread::~eFilePumpThread()
 {
+	Close();
+}
+//-------------------------------------------------------------------------------
+
+bool eFilePumpThread::Open(std::string aFileName)
+{
+	mFileFd = open(aFileName.c_str(), O_RDONLY | O_LARGEFILE);
+	if(mFileFd <= 0) {
+#ifdef DEBUG_LOG
+		LOG("media file open fail. [%s]", aFileName.c_str());
+#endif
+		mFileFd = 0;
+		return false;
+	}
+#ifdef DEBUG_LOG
+	LOG("media file open success. [%d] [%s]", mFileFd, aFileName.c_str());
+#endif
+	return true;
+}
+//-------------------------------------------------------------------------------
+
+void eFilePumpThread::Close()
+{
+	if(mFileFd > 0) {
+		close(mFileFd);
+#ifdef DEBUG_LOG
+		LOG("media file closed. [%d]", mFileFd);
+#endif
+	}
+	mFileFd = 0;
+}
+//-------------------------------------------------------------------------------
+
+void eFilePumpThread::SeekOffset(int aOffset)
+{
+#ifdef DEBUG_LOG
+	LOG("lseek to %d", aOffset);
+#endif
+	lseek(mFileFd, aOffset,  SEEK_SET);
 }
 //-------------------------------------------------------------------------------
 
 void eFilePumpThread::Run()
 {
-	int rc = 0;
+	int rc = 0, wc = 0;
 	unsigned char buffer[BUFFER_SIZE];
-	int mediafilefd = open(mFileName.c_str(), O_RDONLY | O_LARGEFILE);
 
 	struct pollfd pollevt;
 
-	pollevt.fd      = mDeviceFd;
-	pollevt.events  = POLLOUT;
-	pollevt.revents = 0;
+	pollevt.fd     = mDeviceFd;
+	pollevt.events = POLLOUT;
 
 	mTermFlag = true;
 	while(mTermFlag) {
+		pollevt.revents = 0;
 		rc = poll((struct pollfd*)&pollevt, 1, 1000);
 
 		if (pollevt.revents & POLLOUT) {
-			rc = read(mediafilefd, buffer, BUFFER_SIZE);
+			rc = read(mFileFd, buffer, BUFFER_SIZE);
 			if(rc < 0) {
 				break;
 			}
+			wc = write(mDeviceFd, buffer, rc);
+			if(wc != rc) {
 #ifdef DEBUG_LOG
-			LOG("%d byte write.", rc);
+				LOG("need rewrite.. rc[%d], wc[%d]", rc, wc);
 #endif
-			rc = write(mDeviceFd, buffer, rc);
+				int read_len = rc;
+				fd_set device_writefds;
+
+				FD_ZERO(&device_writefds);
+				FD_SET(mDeviceFd, &device_writefds);
+
+				for(int i = wc; i < read_len; i += wc) {
+					if (select(mDeviceFd + 1, 0, &device_writefds, 0, 0) < 0)
+						break;
+					wc = write(mDeviceFd, buffer + i, read_len - i);
+#ifdef DEBUG_LOG
+					LOG("-> retry write.. rc[%d], wc[%d]", read_len - i, wc);
+#endif
+				}
+			}
 		}
 	}
-	close(mediafilefd);
+#ifdef DEBUG_LOG
+	LOG("file pump stoped.", rc);
+#endif
+	Close();
 	mTermFlag = false;
 }
 //-------------------------------------------------------------------------------

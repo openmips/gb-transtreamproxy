@@ -5,8 +5,8 @@
  *      Author: kos
  */
 
-#ifndef EDEMUXPUMPTHREAD_H_
-#define EDEMUXPUMPTHREAD_H_
+#ifndef ENETWORKPUMPTHREAD_H_
+#define ENETWORKPUMPTHREAD_H_
 
 #include "uThread.h"
 //-------------------------------------------------------------------------------
@@ -14,15 +14,16 @@
 class eNetworkPumpThread : public uThread
 {
 private:
-	int mDeviceFd;
-	bool mTermFlag;
+	bool mTermFlag, mHeaderEnable;
+	int mDeviceFd, mOutputFileFd;
+
 protected:
 	void Run();
 	void Terminate();
 public:
-	eNetworkPumpThread(int aDeviceFd);
+	eNetworkPumpThread(int aDeviceFd, int aOutputFileFd = 0, bool aHeaderEnable=true);
 	virtual ~eNetworkPumpThread();
 };
 //-------------------------------------------------------------------------------
 
-#endif /* EDEMUXPUMPTHREAD_H_ */
+#endif /* ENETWORKPUMPTHREAD_H_ */

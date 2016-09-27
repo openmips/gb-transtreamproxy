@@ -25,15 +25,15 @@
 #define _UL_(x) L##x
 //-------------------------------------------------------------------------------
 
-class eURIDecoder
+class URIDecoder
 {
 protected:
 	unsigned char H2I(wchar_t aHexDigit);
 	const wchar_t* DecodeURI(wchar_t* aData, int aBreakCond);
 
 public:
-	eURIDecoder();
-	virtual ~eURIDecoder();
+	URIDecoder();
+	virtual ~URIDecoder();
 
 	std::string Decode(const char* aInput);
 	std::wstring Decode(const wchar_t* aInput);
