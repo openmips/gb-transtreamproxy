@@ -2,8 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 #AC_PREREQ([2.69])
-AC_INIT([transtreamproxy], [2.2.0], [kos@dev3])
-AM_INIT_AUTOMAKE([transtreamproxy], [2.2.0])
+AC_INIT([transtreamproxy], [1.0.0], [oskwon@marusys.com])
+AM_INIT_AUTOMAKE([transtreamproxy], [1.0.0])
 
 #AC_CONFIG_SRCDIR([main.cpp])
 AC_CONFIG_HEADERS([config.h])
@@ -19,15 +19,8 @@ AC_PROG_CXX
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_CHECK_LIB(pthread, pthread_create)
-PTHREAD_LIBS=-lpthread
+PTHREAD_LIBS=-pthread
 AC_SUBST(PTHREAD_LIBS)
-
-AC_CHECK_LIB(rt, shm_open)
-RT_LIBS=-lrt
-AC_SUBST(RT_LIBS)
-
-WARN_CFLAGS=-Wno-unused-result
-AC_SUBST(WARN_CFLAGS)
 
 # Checks for libraries.
 AC_SUBST(PLATFORM)

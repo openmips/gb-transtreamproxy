@@ -11,17 +11,17 @@
 #include "eURIDecoder.h"
 //-------------------------------------------------------------------------------
 
-URIDecoder::URIDecoder()
+eURIDecoder::eURIDecoder()
 {
 }
 //-------------------------------------------------------------------------------
 
-URIDecoder::~URIDecoder()
+eURIDecoder::~eURIDecoder()
 {
 }
 //-------------------------------------------------------------------------------
 
-unsigned char URIDecoder::H2I(wchar_t aHexDigit)
+unsigned char eURIDecoder::H2I(wchar_t aHexDigit)
 {
 	switch (aHexDigit) {
 	case _UL_('0'):
@@ -55,7 +55,7 @@ unsigned char URIDecoder::H2I(wchar_t aHexDigit)
 }
 //-------------------------------------------------------------------------------
 
-const wchar_t* URIDecoder::DecodeURI(wchar_t* aData, int aBreakCond)
+const wchar_t* eURIDecoder::DecodeURI(wchar_t* aData, int aBreakCond)
 {
 	wchar_t* read  = aData;
 	wchar_t* write = aData;
@@ -204,7 +204,6 @@ const wchar_t* URIDecoder::DecodeURI(wchar_t* aData, int aBreakCond)
 					write += 2;
 
 					prevWasCr = false;
-					break;
 				}
 				break;
 
@@ -216,7 +215,6 @@ const wchar_t* URIDecoder::DecodeURI(wchar_t* aData, int aBreakCond)
 				write++;
 
 				prevWasCr = false;
-				break;
 			}
 			break;
 
@@ -238,14 +236,13 @@ const wchar_t* URIDecoder::DecodeURI(wchar_t* aData, int aBreakCond)
 			write++;
 
 			prevWasCr = false;
-			break;
 		}
 	}
 	return NULL;
 }
 //-------------------------------------------------------------------------------
 
-std::wstring URIDecoder::Decode(const wchar_t* aInput)
+std::wstring eURIDecoder::Decode(const wchar_t* aInput)
 {
 	wchar_t working[1024] = {0};
 
@@ -256,7 +253,7 @@ std::wstring URIDecoder::Decode(const wchar_t* aInput)
 }
 //-------------------------------------------------------------------------------
 
-std::string URIDecoder::Decode(const char* aInput)
+std::string eURIDecoder::Decode(const char* aInput)
 {
 	std::string tmp = aInput;
 	std::wstring in = L"";

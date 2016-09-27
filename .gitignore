@@ -1,5 +1,3 @@
-streamproxy
-filestreamproxy
 transtreamproxy
 *.ts
 *.log
@@ -23,5 +21,4 @@ depcomp
 install-sh
 missing
 stamp-h1
-config.h.in~
 

@@ -5,11 +5,13 @@
  *      Author: kos
  */
 
+//#include "uLogger.h"
+//#include "uDemux.h"
+
 #include <poll.h>
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/ioctl.h>
 
 #include "ePreDefine.h"
@@ -21,8 +23,8 @@
 //#define LOG(X,...) { do{}while(0); }
 #endif
 
-eNetworkPumpThread::eNetworkPumpThread(int aDeviceFd, int aOutputFileFd, bool aHeaderEnable)
-	: mTermFlag(0), mDeviceFd(aDeviceFd), mOutputFileFd(aOutputFileFd), uThread("eNetworkPumpThread"), mHeaderEnable(aHeaderEnable)
+eNetworkPumpThread::eNetworkPumpThread(int aDeviceFd)
+	: mTermFlag(0), mDeviceFd(aDeviceFd), uThread("eNetworkPumpThread")
 {
 }
 //-------------------------------------------------------------------------------
@@ -44,24 +46,17 @@ void eNetworkPumpThread::Run()
 
 	mTermFlag = true;
 
-	if (mOutputFileFd <= 0) {
-		mOutputFileFd = 1;
-	}
-
-	if (mHeaderEnable) {
-		const char *c = "\
+	const char *c = "\
 HTTP/1.0 200 OK\r\n\
 Connection: close\r\n\
 Content-Type: video/mpeg\r\n\
 Server: stream_enigma2\r\n\
 \r\n";
-		wc = write(mOutputFileFd, c, strlen(c));
-	}
-#ifdef DEBUG_LOG
-	LOG("network pump start.", rc);
-#endif
+
+	write(1, c, strlen(c));
+
 	while(mTermFlag) {
-		rc = poll((struct pollfd*)&pollevt, 1, 500);
+		rc = poll((struct pollfd*)&pollevt, 1, 1000);
 		if (pollevt.revents & POLLIN) {
 			rc = read(mDeviceFd, buffer, BUFFER_SIZE);
 
@@ -71,20 +66,18 @@ Server: stream_enigma2\r\n\
 #endif
 				continue;
 			}
-			wc = write(mOutputFileFd, buffer, rc);
-			if(wc != rc) {
 #ifdef DEBUG_LOG
-				LOG("need rewrite.. rc[%d], wc[%d]", rc, wc);
+			LOG("%d byte read", rc);
 #endif
-			}
+			wc = write(1, buffer, rc);
+#ifdef DEBUG_LOG
+			LOG("%d byte write", wc);
+#endif
 		} else if (pollevt.revents & POLLHUP) {
 			ioctl(mDeviceFd, 200, 0);
 			break;
 		}
 	}
-#ifdef DEBUG_LOG
-	LOG("network pump stoped.", rc);
-#endif
 	mTermFlag = false;
 }
 //-------------------------------------------------------------------------------
